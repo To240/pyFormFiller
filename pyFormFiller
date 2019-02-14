@@ -1,0 +1,108 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from collections import defaultdict
+from openpyxl import load_workbook
+from selenium.common.exceptions import StaleElementReferenceException
+from datetime import date
+from datetime import datetime
+import openpyxl
+import time
+import os
+import sys
+import traceback
+import openpyxl
+import datetime
+
+#######Opens web pages and launches selenium etc. Remove drive.maximize_window if you don't need it
+#######some HTML form elements such as drop downs will need to be full screened. So just test it.
+driver = webdriver.Chrome()
+driver.get('https://www.yourwebsitegoeshere.com')
+driver.maximize_window()
+driver.implicitly_wait(10)
+
+######## I was working with a Wix website, so had to use iframes for my HTML forms. If your website uses an iframe then
+######## you will also need this piece of code. If not, then it can be removed.
+iframe = driver.find_element_by_xpath("//iframe[@name='htmlComp-iframe']")
+driver.switch_to.frame(iframe)
+
+########We now assign a variable to each of our elements so that we can directly call them in the code.
+########If you are using chrome, and your website has xpath functionality I highly advise downloading the chrome
+########extension 'xPath Finder' - simply click a web element and it tells you the xpath.
+first_name = driver.find_element_by_xpath('//*[@id="first_name"]')
+last_name = driver.find_element_by_xpath('//*[@id="last_name"]')
+email = driver.find_element_by_xpath('//*[@id="email"]')
+mobile = driver.find_element_by_xpath('//*[@id="mobile"]')
+date_of_birth = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNa"]')
+school = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNZ"]')
+course = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNi"]')
+city = driver.find_element_by_xpath('//*[@id="city"]')
+
+
+########Now that we have a way to refer to our web elements, we need to open our excel documents and read the data
+########from it. We do this by opening our excel workbook with the load_workbook function and giving it the direct path to the 
+########workbook.We then set the sheet to the active workbook, and refer to the columns in that sheet. We assign columns to variables
+########so as to not get confused when calling upon them later. At this point we can now send the cell in column 'A' on the active
+########sheet to our HTML form. Now all we need to do is loop through each cell individually in a while loop.
+workbook = load_workbook(r'C:\Users\Tomas\PycharmProjects\form_filler\random_excel_sheet.xlsx')
+sheet = workbook.active
+SCHOOL = sheet['A']
+FNAME = sheet['B']
+LNAME = sheet['C']
+EMAIL = sheet['D']
+MOBILE = sheet['E']
+DOB = sheet['G']
+
+
+########here we define two variables. i and x. i will refer to the row number, so if i == 2, the program will loop through row 
+########2 and print the values to the HTML form through the selenium send_keys function. 
+########x is just a placeholder variable that counts up to a set number and is incremented by 1 each time the while loop loops. 
+########For the sake of ease, have x always equal 1 and change the "while x <= 50" to define how many times you want the loop
+########to repeat. 
+######## You will notice various time.sleep statements throughout the section below, feel free to change these, delete them,
+########whatever. I simply used them as a way to slow the program down during testing in order to see if anything broke.
+########I advise at least having the first time.sleep(10) at the start of the loop as this is when the page is refreshing.
+########If your website is fast to reload, you may not need this. For slower sites, increase the sleep time.
+i = 1
+x = 1
+while x <= 50:
+    print(i)
+    time.sleep(10)
+    school.click()
+    school.send_keys(SCHOOL[i].value)
+    first_name.send_keys(FNAME[i].value)
+    last_name.send_keys(LNAME[i].value)
+    email.send_keys(EMAIL[i].value)
+    mobile.send_keys(MOBILE[i].value)
+    date_of_birth.click()
+    date_of_birth.clear()
+    date_of_birth.send_keys(str(DOB[i].value))
+    city.send_keys('Cairo')
+    time.sleep(2)
+    course.send_keys('N/A')
+    time.sleep(2)
+    driver.find_element_by_xpath('/html/body/center/font/form/center/input').click()
+    print("completed applicant: " + FNAME[i].value)
+    time.sleep(2)
+    driver.back()
+    time.sleep(2)
+########for some reason selenium has a recurring error for StaleElements, where it struggles to find a particular element
+########after a page is reloaded or refreshed. Due to the nature of submitting HTML forms repeatedly, I regularly
+########ecountered this issue. To overcome it I simply copy pasted the direct references to the elements again.
+########I believe this may have had something to do with the iframe present on the page, but feel free to mess around with
+########this and possible delete the below code if needed.
+    iframe = driver.find_element_by_xpath("//iframe[@name='htmlComp-iframe']")
+    driver.switch_to.frame(iframe)
+    first_name = driver.find_element_by_xpath('//*[@id="first_name"]')
+    last_name = driver.find_element_by_xpath('//*[@id="last_name"]')
+    email = driver.find_element_by_xpath('//*[@id="email"]')
+    mobile = driver.find_element_by_xpath('//*[@id="mobile"]')
+    date_of_birth = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNa"]')
+    school = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNZ"]')
+    course = driver.find_element_by_xpath('//*[@id="00N0Y00000RWiNi"]')
+    city = driver.find_element_by_xpath('//*[@id="city"]')
+########we increment both x and i by +1 to keep the loop going until it reaches the desired amount of iterations.    
+    i+=1
+    x += 1
+
+########once the required amount of loops have occurred, the program will end and the browser will close.
+driver.quit()
